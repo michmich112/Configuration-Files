@@ -1,0 +1,13 @@
+" tab completion of keywords
+function InsertTabWrapper(dir)
+				let col = col('.') - 1
+				if !col || getline('.')[col - 1] !~ '\k'
+								return "\<tab>"
+				elseif "back" == a:dir
+								return "\<c-p>"
+				else
+								return "\<c-n>"
+				endif
+endfunction
+
+set encoding=utf-8
