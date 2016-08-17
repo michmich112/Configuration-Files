@@ -1,3 +1,4 @@
+# Aliases for the shell/terminal and zsh
 alias c="clear"
 alias la="ls -la"
 alias ll="ls -l"

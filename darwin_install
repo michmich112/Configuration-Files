@@ -1,0 +1,50 @@
+#!/bin/bash
+#installation for OSX
+
+#install homebrew:
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+#install the programs we want: 
+brew install zsh
+brew install wget
+brew install tmux
+brew install vim
+
+#install oh-my-zsh
+sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+
+# update function
+function update {
+				echo "checking" $1
+				if [ $(dpkg-query -W -f='${Status}' $1 2>/dev/null | grep -c "ok installed") -eq 0 ];
+				then
+								brew install $1
+				else
+								echo $1 "is already installed "   
+				fi
+}
+
+#verify that wanted packages are installed and install them if they aren't
+source packages
+for package in $NUM
+do
+				update ${PACKAGES[$package]}
+done
+
+git config --global color.ui auto
+
+# install config for tmux
+if [ -f /etc/tmux.conf ]
+then
+	echo "file exists"
+	echo "deleting old config file"
+	sudo rm -f /etc/tmux.conf
+	echo "old config file deleted"
+	echo "installing new config file"
+	sudo cp tmux.conf /etc/
+	echo "installed"
+else
+	echo "installing config file"
+	sudo cp tmux.conf /etc/
+	echo "installed"
+fi
