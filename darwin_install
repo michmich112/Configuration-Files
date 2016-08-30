@@ -5,52 +5,121 @@ set -o errtrace
 #set -o errexit
 set +o noclobber
 
+repo="https://github.com/michmich112/Configuration-Files.git"
+SOURCE="$HOME/.cache/repo"
+
+repositories=( 'homebrew/completion' 'homebrew/binary' 'caskroom/cask' 'homebrew/versions' 'caskroom/versions' )
+packages=( jq bar p7zip bash-completion zsh wget tmux vim nmap npm nodejs )
+casks=()
+
 #installation for OSX
+function verbose # {{{2
+{
+  echo $@
+} # }}}2
 
-#install homebrew:
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+function install_manager() # {{{2
+{
+  local status=0
 
-#install the programs we want: 
-brew install zsh
-brew install wget
-brew install tmux
-brew install vim
+  if which brew > /dev/null 2>&1; then
+    brew update
+    status=$? && [[ $status != 0 ]] && return $status
+    brew upgrade
+    status=$? && [[ $status != 0 ]] && return $status
+  else
+    verbose "Installing Homebrew"
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    status=$? && [[ $status != 0 ]] && return $status
+    # we really cannot live without this one:
+    brew install jq
+  fi
+  return $status
+} # }}}2
 
-#install oh-my-zsh
-sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+function install_repository() # {{{2
+{
+  local name=$1
+  local status=0
 
-# update function
-function update {
-				echo "checking" $1
-				if [ $(dpkg-query -W -f='${Status}' $1 2>/dev/null | grep -c "ok installed") -eq 0 ];
-				then
-								brew install $1
-				else
-								echo $1 "is already installed "   
-				fi
-}
+  if [[ -z $(brew tap | grep "$name") ]]; then
+    verbose "Adding repository $name"
+    brew tap $name
+    status=$? && [[ $status != 0 ]] && return $status
+  else
+    verbose "Repository $name is already installed"
+  fi
+  return $status
+} # }}}2
 
-#verify that wanted packages are installed and install them if they aren't
-source packages
-for package in $NUM
-do
-				update ${PACKAGES[$package]}
-done
+function install_package() # {{{2
+{
+  local name=$1
+  local status=0
+  local version
+  local info=$(brew info --json=v1 --installed | jq --raw-output --compact-output "map(collect(.name == \"$name\"))[0]")
 
-git config --global color.ui auto
+  if [[ "$info" == "null" ]]; then
+    verbose "Installing $name"
+    $NOOP brew install --appdir=/Applications $name
+    status=$? && [[ $status != 0 ]] && return $status
+  else
+    version=$(echo "$info" | jq --raw-output '.installed[0] | .version')
+    verbose "Package $name is already installed (version $version"
+  fi
+  return $status
+} # }}}2
 
-# install config for tmux
-if [ -f /etc/tmux.conf ]
-then
-	echo "file exists"
-	echo "deleting old config file"
-	sudo rm -f /etc/tmux.conf
-	echo "old config file deleted"
-	echo "installing new config file"
-	sudo cp tmux.conf /etc/
-	echo "installed"
-else
-	echo "installing config file"
-	sudo cp tmux.conf /etc/
-	echo "installed"
-fi
+function setup-zsh() # {{{2
+{
+  # install oh-my-zsh
+  sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+} # }}}2
+
+function setup_git() # {{{2
+{
+  git config --global color.ui auto
+} # }}}2
+
+function setup_tmux() # {{{2
+{
+  # TODO: Check if target exists and if it is older than source!
+  cp $SOURCE/tmux.conf $HOME/.tmux.conf
+} # }}}2
+
+function setup_vim() # {{{2
+{
+  # TODO: Check if target exists and if it is older than source!
+  cp $SOURCE/vimrc $HOME/.vimrc
+} # }}}2
+
+function main() # {{{2
+{
+  install_manager
+
+  for repository in ${repositories[*]}; do
+    install_repository $repository
+    status=$? && [[ $status != 0 ]] && echo "Failed installing repository $repository" && return $status
+  done
+
+  for package in ${packages[*]}; do
+    install_package $package
+    status=$? && [[ $status != 0 ]] && echo "Failed installing package $package" && return $status
+  done
+
+  [[ -d $HOME/.cache ]] || mkdir -p $HOME/.cache
+  if [[ -d $SOURCE ]]; then
+    git -C "$SOURCE" pull
+  else
+    $NOOP git clone $repo "$SOURCE"
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
+
+  setup_zsh
+  setup_git
+  setup_tmux
+  setup_vim
+} # }}}2
+
+main $@
+#vim: ts=2:syntax=sh:foldmethod=marker
