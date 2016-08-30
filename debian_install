@@ -1,5 +1,10 @@
 #! /usr/bin/env bash
 
+shopt -s extglob
+set -o errtrace
+#set -o errexit
+set +o noclobber
+
 # update function
 function update {
 				echo "checking" $1
