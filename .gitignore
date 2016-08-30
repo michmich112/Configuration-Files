@@ -1,0 +1,35 @@
+# Backup files
+*~
+*.swp
+*.[bB][aA][kK]
+
+# Temporary files
+tmp/
+log/
+obj/
+
+# Windows specific files
+[tT]humbs.db
+
+# Mac OSX specific files
+.DS_Store
+
+*.gem
+*.rbc
+.bundle
+.config
+coverage
+InstalledFiles
+lib/bundler/man
+pkg
+rdoc
+spec/reports
+test/tmp
+test/version_tmp
+tmp
+.vagrant/
+
+# YARD artifacts
+.yardoc
+_yardoc
+doc/
