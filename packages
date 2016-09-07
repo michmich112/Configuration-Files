@@ -1,4 +1,0 @@
-#!/bin/bash
-#packages and programs to install
-NUM=" 0 1 2 3 4 5 " 
-PACKAGES=( nodejs npm tmux zsh nmap vim )
