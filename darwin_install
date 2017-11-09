@@ -70,7 +70,7 @@ function install_package() # {{{2
   return $status
 } # }}}2
 
-function setup-zsh() # {{{2
+function setup_zsh() # {{{2
 {
   # install oh-my-zsh
   sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
